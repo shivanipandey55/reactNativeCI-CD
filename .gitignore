@@ -22,11 +22,9 @@ DerivedData
 *.xcuserstate
 **/.xcode.env.local
 
-android/app/*.jks
-android/app/*.p12
+# Android signing keys
 *.keystore
-!debug.keystore
-
+keystore.txt
 
 .kotlin
 # react-native-config codegen
