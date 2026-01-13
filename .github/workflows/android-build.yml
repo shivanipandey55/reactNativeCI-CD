@@ -1,4 +1,4 @@
-name: React Native Android CI
+name: React Native Android CI - Signed AAB
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
           node-version: 24
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -31,22 +31,22 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
 
-      #  Restore keystore from GitHub Secrets
+      # 🔐 Restore keystore from GitHub Secrets
       - name: Decode Keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.jks
 
-      #  Build Signed Release AAB (Play Store Ready)
+      # 🚀 Build Signed Release AAB (Play Store Ready)
       - name: Build Signed Release AAB
         run: |
           cd android
           ./gradlew bundleRelease \
-            -PKEYSTORE_FILE=my-release-key.jks \
+            -PKEYSTORE_FILE=app/my-release-key.jks \
             -PKEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }} \
             -PKEY_ALIAS=${{ secrets.KEY_ALIAS }} \
             -PKEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
 
-      #  Upload AAB Artifact
+      # ⬆ Upload AAB Artifact
       - name: Upload Release AAB
         uses: actions/upload-artifact@v4
         with:

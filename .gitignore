@@ -22,6 +22,12 @@ DerivedData
 *.xcuserstate
 **/.xcode.env.local
 
+android/app/*.jks
+android/app/*.p12
+*.keystore
+!debug.keystore
+
+
 .kotlin
 # react-native-config codegen
 ios/tmp.xcconfig
