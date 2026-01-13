@@ -1,4 +1,4 @@
-name: React Native Android CI - Signed AAB
+name: React Native Android CI
 
 on:
   push:
@@ -9,6 +9,12 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+
+    # ✅ Gradle ko signing ke env yahin mil jaayenge
+    env:
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
     steps:
       - name: Checkout repo
@@ -28,25 +34,47 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      # ✅ Decode keystore into android/app
+      - name: Decode Keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p android/app
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/my-release-key.keystore
+
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
 
-      # 🔐 Restore keystore from GitHub Secrets
-      - name: Decode Keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.jks
-
-      # 🚀 Build Signed Release AAB (Play Store Ready)
-      - name: Build Signed Release AAB
+      # ✅ Debug APK
+      - name: Build Android Debug APK
         run: |
           cd android
-          ./gradlew bundleRelease \
-            -PKEYSTORE_FILE=app/my-release-key.jks \
-            -PKEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }} \
-            -PKEY_ALIAS=${{ secrets.KEY_ALIAS }} \
-            -PKEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
+          ./gradlew assembleDebug
 
-      # ⬆ Upload AAB Artifact
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      # ✅ Signed Release APK
+      - name: Build Android Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+
+      # ✅ Signed Release AAB (Play Store Ready)
+      - name: Build Android Release AAB
+        run: |
+          cd android
+          ./gradlew bundleRelease
+
       - name: Upload Release AAB
         uses: actions/upload-artifact@v4
         with:
